@@ -4,6 +4,7 @@
 use bevy::prelude::*;
 use bevy::input::mouse::MouseWheel;
 use std::f32::consts::PI;
+use bevy::math::primitives::Rectangle;
 
 // This is the main function where the Bevy application starts.
 fn main() {
@@ -72,7 +73,7 @@ fn generate_road_data() -> Vec<RoadSegment> {
 }
 
 // Spawns the 3D entities for the road network.
-fn spawn_roads<T: std::convert::From<bevy::prelude::Color>>(
+fn spawn_roads(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
@@ -81,12 +82,10 @@ fn spawn_roads<T: std::convert::From<bevy::prelude::Color>>(
 
     for segment in road_data {
         // Create a custom mesh for the road segment.
-        // We'll use a `Mesh` to define the shape and a `StandardMaterial` for the color.
-        // A simple quad is sufficient for a flat road.
-        let mesh = Mesh::from(shape::Quad::new(Vec2::new(
+        let mesh = Mesh::from(Rectangle::new(
             segment.end_pos.distance(segment.start_pos),
             segment.width,
-        )));
+        ));
 
         // Calculate the direction and rotation of the road segment.
         let direction = (segment.end_pos - segment.start_pos).normalize();
@@ -98,7 +97,7 @@ fn spawn_roads<T: std::convert::From<bevy::prelude::Color>>(
         // Spawn a PbrBundle to represent the road segment in 3D.
         commands.spawn(PbrBundle {
             mesh: meshes.add(mesh),
-            material: materials.add(<bevy::prelude::Color as Into<T>>::into(Color::rgb(0.2, 0.2, 0.2)).into()),
+            material: materials.add(StandardMaterial::from(Color::rgb(0.2, 0.2, 0.2))),
             transform: Transform::from_translation(position).with_rotation(rotation),
             ..default()
         });
@@ -169,10 +168,8 @@ fn camera_input(
     mut cursor_moved: EventReader<CursorMoved>,
     mouse_buttons: Res<ButtonInput<MouseButton>>,
     mut last_cursor_position: Local<Option<Vec2>>,
-    time: Res<Time>,
 ) {
     let mut orbit = query.single_mut();
-    let delta_time = time.delta_seconds();
 
     // Zoom with the mouse wheel.
     for event in mouse_wheel.read() {
